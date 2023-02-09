@@ -1,4 +1,4 @@
-package com.vincent.mediacodec.test
+package com.vincent.mediacodec.test.logic
 
 import android.app.Service
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.vincent.mediacodec
+package com.vincent.mediacodec.test.logic
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,13 +14,10 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.vincent.mediacodec.test.R
-import com.vincent.mediacodec.test.VTRecorder
 
 /**
  *
- *  录屏后台Service
- *
- *  负责
+ *   负责录屏后台Service
  *
  */
 

@@ -1,4 +1,4 @@
-package com.vincent.mediacodec.test
+package com.vincent.mediacodec.test.ui
 import android.app.Activity
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
@@ -7,7 +7,8 @@ import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.vincent.mediacodec.RecordService
+import com.vincent.mediacodec.test.R
+import com.vincent.mediacodec.test.logic.RecordService
 
 
 class MainActivity : AppCompatActivity() {
