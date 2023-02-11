@@ -103,13 +103,17 @@ class VTRecorder(
     ): MediaFormat {
         val format = MediaFormat()
         format.setString(MediaFormat.KEY_MIME, MIME_TYPE)
+        //比特率
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
+        //帧率
         // must be present to configure the encoder, but does not impact the actual frame rate, which is variable
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+        //颜色空间
         format.setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
             MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
         )
+        //I帧间隔时间
         format.setInteger(
             MediaFormat.KEY_I_FRAME_INTERVAL,
             DEFAULT_I_FRAME_INTERVAL
