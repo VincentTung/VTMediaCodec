@@ -20,6 +20,8 @@ import android.view.WindowMetrics
 import com.vincent.mediacodec.test.util.VTCodecUtil.getEncodedData
 import java.io.File
 import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * 录屏类
@@ -52,6 +54,8 @@ class VTRecorder(
         //保存文件格式为mp4格式
         private const val POSTFIX = ".mp4"
     }
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
     private var windowManager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var hasMuxerStarted: Boolean = false
 
@@ -260,7 +264,7 @@ class VTRecorder(
      * 生成文件名
      */
     private fun generateFileName(): String {
-        return System.currentTimeMillis().toString()
+        return dateFormat.format(Date()).toString()
     }
 
 }

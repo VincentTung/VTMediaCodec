@@ -7,10 +7,15 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.vincent.mediacodec.test.R
 import com.vincent.mediacodec.test.data.RecordFile
+import java.io.File
+import java.sql.Date
+import java.text.SimpleDateFormat
+import java.util.*
 
 class RecordFileListAdapter(private val fileList: List<RecordFile>) :
     RecyclerView.Adapter<RecordFileListAdapter.ItemViewHolder>() {
 
+    private val dateFormat:SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
     private var onItemClickListener:OnItemClickListener? = null
     fun setOnItemClickListener(listener: OnItemClickListener){
         this.onItemClickListener = listener
@@ -34,15 +39,14 @@ class RecordFileListAdapter(private val fileList: List<RecordFile>) :
         }
         val recordFile = fileList[position]
         holder.run {
-            name.text = recordFile.filePath
+            name.text = File(recordFile.filePath).name
             duration.text = getDurationString(recordFile.duration)
             createTime.text = getCreateTimeString(recordFile.createTime)
         }
     }
 
     private fun getCreateTimeString(createTime: Long): CharSequence? {
-
-        return createTime.toString()
+        return dateFormat.format(Date(createTime))
     }
 
     private fun getDurationString(duration: Long): CharSequence? {
