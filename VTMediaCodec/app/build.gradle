@@ -43,6 +43,9 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
 
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+// LifeCycleScope
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
     def camerax_version = "1.0.0-beta07"
 // CameraX core library using camera2 implementation
     implementation "androidx.camera:camera-camera2:$camerax_version"
