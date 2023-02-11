@@ -45,16 +45,21 @@ class VTRecorder(
 
         private const val TAG = "VTRecorder"
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
+        //保存文件格式为mp4格式
+        private const val POSTFIX =".mp4"
     }
 
-
     private var hasMuxerStarted: Boolean = false
-    private var encodeVideoTrackIndex: Int = 0
+    //muxer负责生成mp4
     private lateinit var mediaMuxer: MediaMuxer
+    //录制存储文件
     private lateinit var saveFile: File
+    //录屏系统类
     private lateinit var mediaProjection: MediaProjection
     private lateinit var mediaProjectionManager: MediaProjectionManager
+    //编码器
     private lateinit var mediaCodec: MediaCodec
+    private var encodeVideoTrackIndex: Int = 0
 
     init {
         initFile()
@@ -62,15 +67,14 @@ class VTRecorder(
     }
 
     private fun initFile() {
-        saveFile = File(
-            this.context.filesDir.path + "/${System.currentTimeMillis()}.mp4"
-        )
+        saveFile = File("${this.context.filesDir.path}/${generateFileName()}${POSTFIX}")
         if (saveFile.exists()) {
             saveFile.delete()
             saveFile.createNewFile()
         }
         Log.d(TAG, "path:${saveFile.path}")
     }
+
 
     private fun initMediaProjection() {
         mediaProjectionManager =
@@ -233,4 +237,12 @@ class VTRecorder(
         mediaMuxer.stop()
         mediaMuxer.release()
     }
+
+    /**
+     * 生成文件名
+     */
+    private fun generateFileName(): String {
+        return  System.currentTimeMillis().toString()
+    }
+
 }
