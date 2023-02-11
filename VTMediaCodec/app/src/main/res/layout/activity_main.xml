@@ -7,16 +7,23 @@
     tools:context=".ui.MainActivity">
 
 
-
-<!--    <androidx.camera.view.PreviewView-->
-<!--        android:id="@+id/viewFinder"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent" >-->
-
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_decode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="解码播放" />
         <Button
             android:id="@+id/btn_stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="StopRecord" />
-<!--    </androidx.camera.view.PreviewView>-->
+            android:text="停止录制" />
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <!--    </androidx.camera.view.PreviewView>-->
+
 </FrameLayout>

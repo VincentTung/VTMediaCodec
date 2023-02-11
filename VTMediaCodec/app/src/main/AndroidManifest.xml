@@ -3,8 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.camera.any" />
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -15,13 +17,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VTMediaCodec"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.PlayActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
 
         <service
             android:name=".logic.RecordService"
             android:enabled="true"
             android:exported="true"
-            android:foregroundServiceType="mediaProjection"
-            />
+            android:foregroundServiceType="mediaProjection" />
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">

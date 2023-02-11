@@ -58,7 +58,7 @@ class VTRecorder(
     //muxer负责生成mp4
     private lateinit var mediaMuxer: MediaMuxer
 
-    //录制存储文件
+    //录制存储文件 格式:/data/user/0/com.vincent.mediacodec.test/files/1676103755796.mp4
     private lateinit var saveFile: File
 
     //录屏系统类
