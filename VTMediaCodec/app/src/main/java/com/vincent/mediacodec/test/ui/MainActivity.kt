@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         private const val  TAG = "MainActivity"
     }
 
-    private lateinit var mMediaProjectionManager: MediaProjectionManager
+    private lateinit var mediaProjectionManager: MediaProjectionManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -33,9 +33,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initMediaProjection() {
-        mMediaProjectionManager =
+        mediaProjectionManager =
             getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        val captureIntent: Intent = mMediaProjectionManager.createScreenCaptureIntent()
+        val captureIntent: Intent = mediaProjectionManager.createScreenCaptureIntent()
        val  startActivity =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { it ->
                 when (it.resultCode) {

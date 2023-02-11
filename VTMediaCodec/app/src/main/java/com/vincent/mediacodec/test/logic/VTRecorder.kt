@@ -14,6 +14,7 @@ import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.util.Log
 import android.view.Display
+import android.view.Surface
 import android.view.WindowManager
 import android.view.WindowMetrics
 import java.io.File
@@ -45,25 +46,33 @@ class VTRecorder(
 
         private const val TAG = "VTRecorder"
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
-        //保存文件格式为mp4格式
-        private const val POSTFIX =".mp4"
-    }
 
+        //保存文件格式为mp4格式
+        private const val POSTFIX = ".mp4"
+    }
+    private var windowManager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var hasMuxerStarted: Boolean = false
+
     //muxer负责生成mp4
     private lateinit var mediaMuxer: MediaMuxer
+
     //录制存储文件
     private lateinit var saveFile: File
+
     //录屏系统类
     private lateinit var mediaProjection: MediaProjection
     private lateinit var mediaProjectionManager: MediaProjectionManager
+
     //编码器
     private lateinit var mediaCodec: MediaCodec
     private var encodeVideoTrackIndex: Int = 0
 
+
     init {
         initFile()
         initMediaProjection()
+        initMuxer()
+
     }
 
     private fun initFile() {
@@ -123,7 +132,7 @@ class VTRecorder(
 
 
     private fun startRecording() {
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
         val screenWidth: Int
         val screenHeight: Int
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -147,11 +156,12 @@ class VTRecorder(
         )
         //初始化MediaFormat
         val mediaFormat = createMediaFormat(6000000, 0)
-        //设置宽高
+        //设置MediaFormat的宽高
         mediaFormat.setInteger(MediaFormat.KEY_WIDTH, screenWidth)
         mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, screenHeight)
-
+        //创建codec
         mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE)
+        //设置codec的回调
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
             }
@@ -178,11 +188,13 @@ class VTRecorder(
 
         })
 
-        //设置为编码模式
+        //设置codec的模式为编码模式
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        val inputSurface = mediaCodec.createInputSurface()
-        initMuxer()
+        //提前创建InputSurface
+        val inputSurface: Surface =  mediaCodec.createInputSurface()
+        //启动编码器
         mediaCodec.start()
+        //开始录屏
         mediaProjection.createVirtualDisplay(
             "Record", screenWidth, screenHeight, screenDensity,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
@@ -190,6 +202,9 @@ class VTRecorder(
         )
     }
 
+    /**
+     * 获取编码后的视频数据buffer
+     */
     private fun getEncodedData(outputBufferId: Int, info: BufferInfo): ByteBuffer {
         val encodedData: ByteBuffer = mediaCodec.getOutputBuffer(outputBufferId)!!
         encodedData.position(info.offset)
@@ -242,7 +257,7 @@ class VTRecorder(
      * 生成文件名
      */
     private fun generateFileName(): String {
-        return  System.currentTimeMillis().toString()
+        return System.currentTimeMillis().toString()
     }
 
 }
