@@ -13,16 +13,20 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.util.Log
+import android.view.Display
 import android.view.WindowManager
 import android.view.WindowMetrics
-import androidx.annotation.RequiresApi
 import java.io.File
 import java.nio.ByteBuffer
 
+/**
+ * 录屏类
+ * 录制屏幕+编码+存储mp4
+ */
 class VTRecorder(
     private val context: Context,
     private val resultCode: Int,
-    private val resultData: Intent?
+    private val resultData: Intent?,
 ) {
 
     companion object {
@@ -46,7 +50,7 @@ class VTRecorder(
 
     private var hasMuxerStarted: Boolean = false
     private var encodeVideoTrackIndex: Int = 0
-    private lateinit var mMediaMuxer: MediaMuxer
+    private lateinit var mediaMuxer: MediaMuxer
     private lateinit var saveFile: File
     private lateinit var mediaProjection: MediaProjection
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -80,7 +84,7 @@ class VTRecorder(
 
     private fun createMediaFormat(
         bitRate: Int,
-        maxFps: Int
+        maxFps: Int,
     ): MediaFormat {
         val format = MediaFormat()
         format.setString(MediaFormat.KEY_MIME, MIME_TYPE)
@@ -114,14 +118,21 @@ class VTRecorder(
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.R)
     private fun startRecording() {
-
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val metrics: WindowMetrics = windowManager.currentWindowMetrics
+        val screenWidth: Int
+        val screenHeight: Int
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics: WindowMetrics =
+                windowManager.currentWindowMetrics
+            screenWidth = metrics.bounds.width()
+            screenHeight = metrics.bounds.height()
+        } else {
+            val display: Display = windowManager.defaultDisplay
+            screenWidth = display.width
+            screenHeight = display.height
 
-        val screenWidth = metrics.bounds.width()
-        val screenHeight = metrics.bounds.height()
+        }
         prepareMediaCodec(screenWidth, screenHeight, context.resources.configuration.densityDpi)
     }
 
@@ -140,16 +151,17 @@ class VTRecorder(
         mediaCodec.setCallback(object : MediaCodec.Callback() {
             override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
             }
+
             override fun onOutputBufferAvailable(
                 p0: MediaCodec,
                 outputBufferId: Int,
-                info: MediaCodec.BufferInfo
+                info: MediaCodec.BufferInfo,
             ) {
                 if (!hasMuxerStarted) {
                     startMuxer()
                     return
                 }
-                val encodedData = getEncodedData(outputBufferId,info)
+                val encodedData = getEncodedData(outputBufferId, info)
                 muxerWriteData(encodedData, info)
                 mediaCodec.releaseOutputBuffer(outputBufferId, false)
             }
@@ -174,45 +186,51 @@ class VTRecorder(
         )
     }
 
-    private fun getEncodedData(outputBufferId:Int,info:BufferInfo): ByteBuffer {
+    private fun getEncodedData(outputBufferId: Int, info: BufferInfo): ByteBuffer {
         val encodedData: ByteBuffer = mediaCodec.getOutputBuffer(outputBufferId)!!
         encodedData.position(info.offset)
         encodedData.limit(info.offset + info.size)
-        val data =  ByteArray(encodedData.remaining())
+        val data = ByteArray(encodedData.remaining())
         return encodedData.get(data)
     }
 
     private fun startMuxer() {
         // 要在获取第一帧数据后，设置Muxer的track格式，并启动muxer，否则会报错:mediacodec-missing-codec-specific-data
         //https://stackoverflow.com/questions/66529879/mediacodec-missing-codec-specific-data
-        encodeVideoTrackIndex = mMediaMuxer.addTrack(
+        encodeVideoTrackIndex = mediaMuxer.addTrack(
             mediaCodec.outputFormat
         )
-        mMediaMuxer.start()
+        mediaMuxer.start()
         hasMuxerStarted = true
     }
 
     private fun muxerWriteData(encodedData: ByteBuffer, info: MediaCodec.BufferInfo) {
         Log.d(TAG, "writing...")
-        mMediaMuxer.writeSampleData(encodeVideoTrackIndex, encodedData, info)
+        mediaMuxer.writeSampleData(encodeVideoTrackIndex, encodedData, info)
     }
 
     private fun initMuxer() {
-        mMediaMuxer = MediaMuxer(saveFile.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        mediaMuxer = MediaMuxer(saveFile.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     }
 
+    /**
+     *  启动录制
+     */
     fun start() {
         Log.d(TAG, "start")
         startRecording()
     }
 
+    /**
+     * 停止录制
+     */
     fun stop() {
         Log.d(TAG, "stop")
         hasMuxerStarted = false
         mediaCodec.stop()
         mediaCodec.release()
 
-        mMediaMuxer.stop()
-        mMediaMuxer.release()
+        mediaMuxer.stop()
+        mediaMuxer.release()
     }
 }

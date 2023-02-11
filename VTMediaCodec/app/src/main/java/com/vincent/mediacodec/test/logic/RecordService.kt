@@ -17,12 +17,25 @@ import com.vincent.mediacodec.test.R
 
 /**
  *
- *   负责录屏后台Service
+ * 负责后台录屏的Service
  *
  */
 
 class RecordService : Service() {
     companion object {
+        private const val TAG = "RecordService"
+        //notification相关
+        const val NOTIFICATION_CHANNEL_ID = "222"
+        const val NOTIFICATION_CHANNEL_DESC = "des_record"
+        const val NOTIFICATION_CHANNEL_NAME = "recording"
+        const val NOTIFICATION_TICKER = "录屏中..."
+        const val NOTIFICATION_ID = 123
+        //cmd
+        const val CMD_START_RECORD = 1
+        const val CMD_STOP_RECORD = 2
+        const val CMD_UNKNOWN = -1
+
+
         /**
          *  开始录屏
          */
@@ -37,6 +50,9 @@ class RecordService : Service() {
             startService(context, CMD_STOP_RECORD, null, null)
         }
 
+        /**
+         * 启动服务
+         */
         @JvmStatic
         fun startService(context: Context, cmd: Int?, resultCode: Int?, data: Intent?) {
             val starter = Intent(context, RecordService::class.java)
@@ -46,21 +62,10 @@ class RecordService : Service() {
             context.startService(starter)
         }
 
-        const val NOTIFICATION_CHANNEL_ID = "222"
-        const val NOTIFICATION_CHANNEL_DESC = "des_record"
-        const val NOTIFICATION_CHANNEL_NAME = "recording"
-        const val NOTIFICATION_TICKER = "录屏中..."
-        const val NOTIFICATION_ID = 123
 
-        const val CMD_START_RECORD = 1
-        const val CMD_STOP_RECORD = 2
-        const val CMD_UNKNOWN = -1
-
-        private const val TAG = "RecordService"
     }
-
-    private lateinit var recorder: VTRecorder
     private lateinit var notificationManager: NotificationManager
+    private  var recorder: VTRecorder?= null
     override fun onCreate() {
         super.onCreate()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -84,11 +89,11 @@ class RecordService : Service() {
             CMD_START_RECORD -> {
                 showRecordingNotification()
                 recorder = VTRecorder(this, resultCode, resultData)
-                recorder.start()
+                recorder!!.start()
             }
             CMD_STOP_RECORD -> {
                 hideRecordingNotification()
-                recorder.stop( )
+                recorder?.stop( )
             }
             else -> {
             }
