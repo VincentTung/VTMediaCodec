@@ -17,6 +17,7 @@ import android.view.Display
 import android.view.Surface
 import android.view.WindowManager
 import android.view.WindowMetrics
+import com.vincent.mediacodec.test.util.VTCodecUtil.getEncodedData
 import java.io.File
 import java.nio.ByteBuffer
 
@@ -36,14 +37,15 @@ class VTRecorder(
 
         private const val REPEAT_FRAME_DELAY_US = 100000 // repeat after 100ms
 
-        private const val KEY_MAX_FPS_TO_ENCODER = "max-fps-to-encoder"
-
         // Keep the values in descending order
         private val MAX_SIZE_FALLBACK = intArrayOf(2560, 1920, 1600, 1280, 1024, 800)
 
         private const val PACKET_FLAG_CONFIG = 1L shl 63
         private const val PACKET_FLAG_KEY_FRAME = 1L shl 62
 
+        private const val BIT_RATE = 6000000
+        private const val FRAME_RATE = 60
+        private const val MAX_FPS = 0
         //编码格式
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
 
@@ -65,7 +67,7 @@ class VTRecorder(
 
     //编码器
     private lateinit var mediaCodec: MediaCodec
-    private var encodeVideoTrackIndex: Int = 0
+    private var encodeVideoTrackIndex: Int = -1
 
 
     init {
@@ -103,7 +105,7 @@ class VTRecorder(
         format.setString(MediaFormat.KEY_MIME, MIME_TYPE)
         format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
         // must be present to configure the encoder, but does not impact the actual frame rate, which is variable
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, 60)
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
         format.setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
             MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
@@ -122,7 +124,7 @@ class VTRecorder(
             // <https://android.googlesource.com/platform/frameworks/base/+/625f0aad9f7a259b6881006ad8710adce57d1384%5E%21/>
             // <https://github.com/Genymobile/scrcpy/issues/488#issuecomment-567321437>
             format.setFloat(
-                KEY_MAX_FPS_TO_ENCODER,
+                MediaFormat.KEY_MAX_FPS_TO_ENCODER,
                 maxFps.toFloat()
             )
         }
@@ -130,32 +132,13 @@ class VTRecorder(
         return format
     }
 
-
-    private fun startRecording() {
-
-        val screenWidth: Int
-        val screenHeight: Int
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val metrics: WindowMetrics =
-                windowManager.currentWindowMetrics
-            screenWidth = metrics.bounds.width()
-            screenHeight = metrics.bounds.height()
-        } else {
-            val display: Display = windowManager.defaultDisplay
-            screenWidth = display.width
-            screenHeight = display.height
-
-        }
-        prepareMediaCodec(screenWidth, screenHeight, context.resources.configuration.densityDpi)
-    }
-
-    private fun prepareMediaCodec(screenWidth: Int, screenHeight: Int, screenDensity: Int) {
+    private fun initMediaCodec(screenWidth: Int, screenHeight: Int, screenDensity: Int) {
         Log.d(
             TAG,
-            "prepareMediaCodec: width:${screenWidth}___height:${screenHeight}___density:${screenDensity}"
+            "initMediaCodec: width:${screenWidth}___height:${screenHeight}___density:${screenDensity}"
         )
         //初始化MediaFormat
-        val mediaFormat = createMediaFormat(6000000, 0)
+        val mediaFormat = createMediaFormat(BIT_RATE, MAX_FPS)
         //设置MediaFormat的宽高
         mediaFormat.setInteger(MediaFormat.KEY_WIDTH, screenWidth)
         mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, screenHeight)
@@ -167,23 +150,26 @@ class VTRecorder(
             }
 
             override fun onOutputBufferAvailable(
-                p0: MediaCodec,
+                codec: MediaCodec,
                 outputBufferId: Int,
                 info: MediaCodec.BufferInfo,
             ) {
+                Log.d(TAG, "onOutputBufferAvailable: $outputBufferId ____ $info")
                 if (!hasMuxerStarted) {
                     startMuxer()
                     return
                 }
-                val encodedData = getEncodedData(outputBufferId, info)
+                val encodedData = getEncodedData(mediaCodec,outputBufferId, info)
                 muxerWriteData(encodedData, info)
                 mediaCodec.releaseOutputBuffer(outputBufferId, false)
             }
 
             override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
+                Log.d(TAG, "onError: ${e.errorCode}___${e.diagnosticInfo}")
             }
 
             override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
+                Log.d(TAG, "onOutputFormatChanged: $format")
             }
 
         })
@@ -202,17 +188,18 @@ class VTRecorder(
         )
     }
 
+
+
     /**
-     * 获取编码后的视频数据buffer
+     * 初始化muxer
      */
-    private fun getEncodedData(outputBufferId: Int, info: BufferInfo): ByteBuffer {
-        val encodedData: ByteBuffer = mediaCodec.getOutputBuffer(outputBufferId)!!
-        encodedData.position(info.offset)
-        encodedData.limit(info.offset + info.size)
-        val data = ByteArray(encodedData.remaining())
-        return encodedData.get(data)
+    private fun initMuxer() {
+        mediaMuxer = MediaMuxer(saveFile.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     }
 
+    /**
+     * 启动muxer
+     */
     private fun startMuxer() {
         // 要在获取第一帧数据后，设置Muxer的track格式，并启动muxer，否则会报错:mediacodec-missing-codec-specific-data
         //https://stackoverflow.com/questions/66529879/mediacodec-missing-codec-specific-data
@@ -223,13 +210,12 @@ class VTRecorder(
         hasMuxerStarted = true
     }
 
+    /**
+     * muxer向文件写入数据
+     */
     private fun muxerWriteData(encodedData: ByteBuffer, info: MediaCodec.BufferInfo) {
-        Log.d(TAG, "writing...")
+        Log.d(TAG, "muxerWriteData...")
         mediaMuxer.writeSampleData(encodeVideoTrackIndex, encodedData, info)
-    }
-
-    private fun initMuxer() {
-        mediaMuxer = MediaMuxer(saveFile.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     }
 
     /**
@@ -237,7 +223,20 @@ class VTRecorder(
      */
     fun start() {
         Log.d(TAG, "start")
-        startRecording()
+        val screenWidth: Int
+        val screenHeight: Int
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics: WindowMetrics =
+                windowManager.currentWindowMetrics
+            screenWidth = metrics.bounds.width()
+            screenHeight = metrics.bounds.height()
+        } else {
+            val display: Display = windowManager.defaultDisplay
+            screenWidth = display.width
+            screenHeight = display.height
+
+        }
+        initMediaCodec(screenWidth, screenHeight, context.resources.configuration.densityDpi)
     }
 
     /**
