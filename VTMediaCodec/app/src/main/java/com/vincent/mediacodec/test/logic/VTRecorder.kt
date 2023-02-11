@@ -31,7 +31,7 @@ class VTRecorder(
 ) {
 
     companion object {
-
+        private const val TAG = "VTRecorder"
         private const val DEFAULT_I_FRAME_INTERVAL = 10 // seconds
 
         private const val REPEAT_FRAME_DELAY_US = 100000 // repeat after 100ms
@@ -44,7 +44,7 @@ class VTRecorder(
         private const val PACKET_FLAG_CONFIG = 1L shl 63
         private const val PACKET_FLAG_KEY_FRAME = 1L shl 62
 
-        private const val TAG = "VTRecorder"
+        //编码格式
         private const val MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC
 
         //保存文件格式为mp4格式
