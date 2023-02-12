@@ -1,4 +1,4 @@
-package com.vincent.mediacodec.test.logic
+package com.vincent.mediacodec.test.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.vincent.mediacodec.test.R
+import com.vincent.mediacodec.test.logic.VTRecorder
 
 /**
  *

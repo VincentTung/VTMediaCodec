@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.vincent.mediacodec.test.R
 import com.vincent.mediacodec.test.adapter.RecordFileListAdapter
 import com.vincent.mediacodec.test.data.RecordFile
-import com.vincent.mediacodec.test.logic.RecordService
+import com.vincent.mediacodec.test.service.RecordService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
